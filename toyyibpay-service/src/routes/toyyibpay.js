@@ -1,9 +1,11 @@
 import express from 'express';
+import multer from 'multer';
 import { createBill, getBillTransactions } from '../services/toyyibpay.js';
 
 const router = express.Router();
+const upload = multer(); // For parsing multipart/form-data
 
-router.post('/callback', (req, res) => {
+router.post('/callback', upload.none(), (req, res) => {
   const payload = req.body;
 
   console.log('========== ToyyibPay Callback ==========');
