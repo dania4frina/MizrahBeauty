@@ -6,15 +6,15 @@ This document summarizes how the Mizrah Beauty Android app will integrate with t
 
 - **Android app** – collects booking details and launches payments.
 - **ToyyibPay sandbox** – payment gateway (`https://dev.toyyibpay.com`).
-- **ToyyibPay Service (Render)** – Node/Express webhook located in `toyyibpay-service/`.
+- **ToyyibPay Service (Render)** – Node/Express proxy + webhook located in `toyyibpay-service/`.
 - **SQL Server** – internal booking/payment persistence.
 
 ## 2. High-level Sequence
 
 1. User confirms a booking inside the app (`BookingConfirmationActivity`).
-2. App calls ToyyibPay `createBill` API with booking info.
-3. ToyyibPay returns `BillCode`.
-4. App opens `https://dev.toyyibpay.com/{BillCode}` in a Custom Tab.
+2. App POSTs to the Render proxy (`/toyyibpay/payment/bill`) with booking info.
+3. The proxy calls ToyyibPay `createBill` using the secret key and returns `BillCode`.
+4. App opens `https://dev.toyyibpay.com/{BillCode}` (provided as `paymentUrl`) in a Custom Tab.
 5. User completes (or cancels) payment.
 6. ToyyibPay performs two responses:
    - Redirects the user to `billReturnUrl` (deep link back into the app).
@@ -35,30 +35,28 @@ Store the resulting `CategoryCode` in `TOYYIBPAY_CATEGORY_CODE` (env file).
 
 ### 3.2 Create Bill (per booking)
 
-`POST https://dev.toyyibpay.com/index.php/api/createBill`
+`POST https://<render-service>/toyyibpay/payment/bill`
 
 Key fields used by the app:
 
 | Field | Value |
 | --- | --- |
-| `userSecretKey` | sandbox secret key |
-| `categoryCode` | environment variable |
+| `amount` | price in RM (proxy converts to cents) |
 | `billName` | e.g. `Mizrah Booking` |
 | `billDescription` | `Booking for {serviceName}` |
-| `billAmount` | price in cents (RM 1.35 → `135`) |
-| `billPayorInfo` | `1` to capture payer email/phone |
-| `billEmail` | user email |
-| `billPhone` | user phone (if available) |
-| `billReturnUrl` | deep link, e.g. `mizrahbeauty://payment/result` |
-| `billCallbackUrl` | Render URL (`https://<service>.onrender.com/toyyibpay/callback`) |
-| `billExternalReferenceNo` | internal booking ID |
+| `customerName` | payer name |
+| `customerEmail` | user email |
+| `customerPhone` | user phone (if available) |
+| `returnUrl` | deep link, e.g. `mizrahbeauty://payment/result` |
+| `callbackUrl` | Render URL (`https://<service>.onrender.com/toyyibpay/callback`) |
+| `referenceId` | internal booking ID |
 
-Response contains `BillCode`. Open `https://dev.toyyibpay.com/{BillCode}`.
+Response contains `billCode` and `paymentUrl`. Open the returned `paymentUrl`.
 
 ## 4. Android Implementation Notes
 
-- Add Retrofit interface `ToyyibPayApi` with `@FormUrlEncoded` `@POST("index.php/api/createBill")`.
-- Configure `Retrofit.Builder().baseUrl("https://dev.toyyibpay.com/")`.
+- Use existing Retrofit interface (`ToyyibPayApi`) pointing at the Render proxy.
+- Configure `Retrofit.Builder().baseUrl("https://<render-service>/")` in `ToyyibPayClient`.
 - In `BookingConfirmationActivity`:
   - Disable button & show loader while API runs.
   - On success: store `BillCode`, open Custom Tab, keep local state.
@@ -66,8 +64,10 @@ Response contains `BillCode`. Open `https://dev.toyyibpay.com/{BillCode}`.
 - Handle deep link returned via `billReturnUrl` to show quick status (success/fail).
 - Optionally add polling endpoint to query server once callback processed.
 
-## 5. Render Webhook (`toyyibpay-service`)
+## 5. Render Proxy & Webhook (`toyyibpay-service`)
 
+- `POST /toyyibpay/payment/bill`: app → proxy → ToyyibPay `createBill`.
+- `GET /toyyibpay/payment/status?billCode=...`: fetch latest transactions from ToyyibPay.
 - `POST /toyyibpay/callback`: receives ToyyibPay form data.  
   Example payload:
   ```
@@ -88,8 +88,9 @@ Response contains `BillCode`. Open `https://dev.toyyibpay.com/{BillCode}`.
 
 | Variable | Purpose |
 | --- | --- |
-| `TOYYIBPAY_SECRET_KEY` | sandbox secret key used by service (optional if only webhook) |
+| `TOYYIBPAY_SECRET_KEY` | sandbox secret key used by proxy/webhook |
 | `TOYYIBPAY_CATEGORY_CODE` | default category code for bill creation |
+| `TOYYIBPAY_BASE_URL` | override ToyyibPay host (defaults to sandbox) |
 | `ALLOW_ORIGINS` | comma-separated list for CORS |
 | `PORT` | port for Render & local dev (default 8080) |
 

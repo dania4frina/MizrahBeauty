@@ -135,7 +135,18 @@
             android:exported="false" />
         <activity
             android:name=".BookingConfirmationActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="mizrahbeauty"
+                    android:host="payment"
+                    android:path="/result" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

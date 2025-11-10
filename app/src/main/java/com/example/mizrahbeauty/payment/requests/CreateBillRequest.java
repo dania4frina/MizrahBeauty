@@ -19,15 +19,34 @@ public class CreateBillRequest {
     @SerializedName("customerEmail")
     private final String customerEmail;
 
+    @SerializedName("customerPhone")
+    private final String customerPhone;
+
     @SerializedName("referenceId")
     private final String referenceId;
 
-    public CreateBillRequest(double amount, String description, String customerName, String customerEmail, String referenceId) {
+    @SerializedName("returnUrl")
+    private final String returnUrl;
+
+    @SerializedName("callbackUrl")
+    private final String callbackUrl;
+
+    public CreateBillRequest(double amount,
+                             String description,
+                             String customerName,
+                             String customerEmail,
+                             String customerPhone,
+                             String referenceId,
+                             String returnUrl,
+                             String callbackUrl) {
         this.amount = amount;
         this.description = description;
         this.customerName = customerName;
         this.customerEmail = customerEmail;
+        this.customerPhone = customerPhone;
         this.referenceId = referenceId;
+        this.returnUrl = returnUrl;
+        this.callbackUrl = callbackUrl;
     }
 
     public double getAmount() {
@@ -46,8 +65,20 @@ public class CreateBillRequest {
         return customerEmail;
     }
 
+    public String getCustomerPhone() {
+        return customerPhone;
+    }
+
     public String getReferenceId() {
         return referenceId;
+    }
+
+    public String getReturnUrl() {
+        return returnUrl;
+    }
+
+    public String getCallbackUrl() {
+        return callbackUrl;
     }
 }
 

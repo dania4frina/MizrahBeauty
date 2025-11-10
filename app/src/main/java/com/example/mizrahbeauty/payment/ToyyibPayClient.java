@@ -15,11 +15,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 public final class ToyyibPayClient {
 
-    /**
-     * Replace this placeholder with your backend base URL, e.g. "https://api.yourdomain.com/".
-     * Keep trailing slash. NEVER point directly to ToyyibPay here.
-     */
-    private static final String BASE_URL = "https://your-backend.example.com/";
+    private static final String BASE_URL = "https://mizrahbeauty-toyyibpay.onrender.com/";
 
     private static Retrofit retrofitInstance;
 
@@ -31,8 +27,8 @@ public final class ToyyibPayClient {
         if (retrofitInstance == null) {
             synchronized (ToyyibPayClient.class) {
                 if (retrofitInstance == null) {
-                    if (TextUtils.isEmpty(BASE_URL) || BASE_URL.contains("your-backend")) {
-                        throw new IllegalStateException("Set ToyyibPayClient.BASE_URL to your backend endpoint before using the API.");
+                    if (TextUtils.isEmpty(BASE_URL)) {
+                        throw new IllegalStateException("ToyyibPayClient BASE_URL must not be empty.");
                     }
 
                     HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
