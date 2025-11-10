@@ -61,6 +61,7 @@ export async function createBill ({
   const result = Array.isArray(response.data) ? response.data[0] : response.data;
 
   if (!result || !result.BillCode) {
+    console.error('ToyyibPay createBill missing BillCode. Raw response:', response.data);
     throw new Error('Failed to receive BillCode from ToyyibPay');
   }
 
