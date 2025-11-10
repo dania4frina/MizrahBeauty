@@ -28,9 +28,20 @@ public final class ToyyibPaySessionManager {
     }
 
     public static void updateFromDeepLink(Uri data) {
-        if (currentSession == null || data == null) {
+        android.util.Log.d("ToyyibPay", "updateFromDeepLink called");
+        
+        if (currentSession == null) {
+            android.util.Log.e("ToyyibPay", "No active session to update");
             return;
         }
+        
+        if (data == null) {
+            android.util.Log.e("ToyyibPay", "Deep link data is null");
+            return;
+        }
+
+        android.util.Log.d("ToyyibPay", "Deep link full URI: " + data.toString());
+        android.util.Log.d("ToyyibPay", "Deep link query string: " + data.getQuery());
 
         String billCode = data.getQueryParameter("billcode");
         String status = data.getQueryParameter("status");
@@ -41,13 +52,17 @@ public final class ToyyibPaySessionManager {
         String amount = data.getQueryParameter("amount");
         String paid = data.getQueryParameter("paid");
 
+        android.util.Log.d("ToyyibPay", "Extracted params - billCode: " + billCode + ", status: " + status + ", paid: " + paid + ", msg: " + message);
+
         if (!TextUtils.isEmpty(billCode) && !billCode.equalsIgnoreCase(currentSession.getBillCode())) {
-            // Deep link is for a different bill; ignore for now.
+            android.util.Log.w("ToyyibPay", "BillCode mismatch. Expected: " + currentSession.getBillCode() + ", Got: " + billCode);
             return;
         }
 
         boolean paidFlag = "1".equals(status) || "true".equalsIgnoreCase(paid);
         String remark = message != null ? message : ("Amount: " + (amount != null ? amount : "N/A"));
+
+        android.util.Log.d("ToyyibPay", "Updating session with status: " + status + ", paid: " + paidFlag);
 
         currentSession.updateStatus(
                 !TextUtils.isEmpty(status) ? status : "UNKNOWN",

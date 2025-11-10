@@ -6,11 +6,16 @@ const router = express.Router();
 router.post('/callback', (req, res) => {
   const payload = req.body;
 
-  console.log('ToyyibPay callback received:', payload);
+  console.log('========== ToyyibPay Callback ==========');
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('Body:', JSON.stringify(payload, null, 2));
+  console.log('Query:', JSON.stringify(req.query, null, 2));
+  console.log('Content-Type:', req.get('content-type'));
+  console.log('========================================');
 
   // TODO: persist payload details to database or queue for processing.
 
-  res.json({ status: 'received' });
+  res.json({ status: 'received', receivedData: payload });
 });
 
 router.post('/simulate', (req, res) => {

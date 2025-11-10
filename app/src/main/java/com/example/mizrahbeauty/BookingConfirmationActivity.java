@@ -60,25 +60,47 @@ public class BookingConfirmationActivity extends AppCompatActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        android.util.Log.d("ToyyibPay", "onNewIntent called");
         setIntent(intent);
         handleIncomingIntent(intent);
     }
     
+    @Override
+    protected void onResume() {
+        super.onResume();
+        android.util.Log.d("ToyyibPay", "onResume called - checking for payment updates");
+        // Refresh status when returning from payment
+        if (currentSession != null && currentSession.getBillCode() != null) {
+            android.util.Log.d("ToyyibPay", "Active session found, refreshing status for bill: " + currentSession.getBillCode());
+            refreshStatusFromServer();
+        }
+    }
+    
     private void handleIncomingIntent(Intent intent) {
         if (intent == null) {
+            android.util.Log.d("ToyyibPay", "handleIncomingIntent: intent is null");
             return;
         }
+        
+        android.util.Log.d("ToyyibPay", "handleIncomingIntent - Action: " + intent.getAction() + ", Data: " + intent.getData());
         
         boolean fromDeepLink = Intent.ACTION_VIEW.equals(intent.getAction()) && intent.getData() != null;
         
         if (fromDeepLink) {
+            android.util.Log.d("ToyyibPay", "Deep link detected! URI: " + intent.getData().toString());
+            android.util.Log.d("ToyyibPay", "Query params: " + intent.getData().getQuery());
+            
             ToyyibPaySessionManager.updateFromDeepLink(intent.getData());
             currentSession = ToyyibPaySessionManager.getCurrentSession();
             if (currentSession != null) {
+                android.util.Log.d("ToyyibPay", "Session updated from deep link. Status: " + currentSession.getLastStatus());
                 populateFieldsFromSession(currentSession);
             }
             refreshStatusFromServer();
+            
+            Toast.makeText(this, "Payment response received", Toast.LENGTH_SHORT).show();
         } else {
+            android.util.Log.d("ToyyibPay", "Regular intent (not deep link), clearing session");
             ToyyibPaySessionManager.clearSession();
             populateFieldsFromExtras(intent);
             currentSession = null;
@@ -314,17 +336,26 @@ public class BookingConfirmationActivity extends AppCompatActivity {
     private void refreshStatusFromServer() {
         ToyyibPaySession session = ToyyibPaySessionManager.getCurrentSession();
         if (session == null || session.getBillCode() == null || session.getBillCode().isEmpty()) {
+            android.util.Log.d("ToyyibPay", "refreshStatusFromServer: no active session or billCode");
             return;
         }
         
-        ToyyibPayClient.getApi().getPaymentStatus(session.getBillCode())
+        String billCode = session.getBillCode();
+        android.util.Log.d("ToyyibPay", "Fetching payment status for billCode: " + billCode);
+        
+        ToyyibPayClient.getApi().getPaymentStatus(billCode)
                 .enqueue(new Callback<PaymentStatusResponse>() {
                     @Override
                     public void onResponse(Call<PaymentStatusResponse> call, Response<PaymentStatusResponse> response) {
+                        android.util.Log.d("ToyyibPay", "Status response - Code: " + response.code() + ", Success: " + response.isSuccessful());
+                        
                         if (!response.isSuccessful() || response.body() == null) {
+                            android.util.Log.e("ToyyibPay", "Failed to fetch status. Code: " + response.code());
                             return;
                         }
                         PaymentStatusResponse body = response.body();
+                        android.util.Log.d("ToyyibPay", "Payment status: " + body.getStatus() + ", Paid: " + body.isPaid() + ", Remark: " + body.getRemark());
+                        
                         ToyyibPaySession updatedSession = ToyyibPaySessionManager.getCurrentSession();
                         if (updatedSession != null) {
                             updatedSession.updateStatus(
@@ -333,12 +364,17 @@ public class BookingConfirmationActivity extends AppCompatActivity {
                                     body.isPaid()
                             );
                             updatePaymentStatusText();
+                            
+                            if (body.isPaid()) {
+                                android.util.Log.d("ToyyibPay", "Payment confirmed as PAID!");
+                                Toast.makeText(BookingConfirmationActivity.this, "Payment confirmed!", Toast.LENGTH_LONG).show();
+                            }
                         }
                     }
                     
                     @Override
                     public void onFailure(Call<PaymentStatusResponse> call, Throwable t) {
-                        // Silent fail; user can retry later.
+                        android.util.Log.e("ToyyibPay", "Status check failed: " + t.getMessage(), t);
                     }
                 });
     }
@@ -348,14 +384,19 @@ public class BookingConfirmationActivity extends AppCompatActivity {
     }
     
     private void openPaymentUrl(String url) {
+        android.util.Log.d("ToyyibPay", "Opening payment URL: " + url);
+        
         try {
             CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder().build();
             customTabsIntent.launchUrl(this, android.net.Uri.parse(url));
+            android.util.Log.d("ToyyibPay", "Custom Tab launched successfully");
         } catch (Exception e) {
+            android.util.Log.e("ToyyibPay", "Custom Tab failed, using fallback intent: " + e.getMessage());
             Intent browserIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url));
             if (browserIntent.resolveActivity(getPackageManager()) != null) {
                 startActivity(browserIntent);
             } else {
+                android.util.Log.e("ToyyibPay", "No browser available");
                 Toast.makeText(this, "No browser available to open ToyyibPay.", Toast.LENGTH_SHORT).show();
             }
         }
