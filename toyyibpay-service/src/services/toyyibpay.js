@@ -58,7 +58,14 @@ export async function createBill ({
     { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
   );
 
-  const result = Array.isArray(response.data) ? response.data[0] : response.data;
+  console.log('ToyyibPay raw response:', JSON.stringify(response.data));
+
+  let result = response.data;
+  
+  // ToyyibPay sometimes returns [{"BillCode":"..."}] or just {"BillCode":"..."}
+  if (Array.isArray(result) && result.length > 0) {
+    result = result[0];
+  }
 
   if (!result || !result.BillCode) {
     console.error('ToyyibPay createBill missing BillCode. Raw response:', response.data);
