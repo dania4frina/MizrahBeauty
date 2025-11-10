@@ -89,11 +89,15 @@ export async function getBillTransactions (billCode) {
     billCode
   };
 
+  console.log('Fetching transactions for billCode:', billCode);
+
   const response = await toyibClient.post(
     'index.php/api/getBillTransactions',
     qs.stringify(payload),
     { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
   );
+
+  console.log('ToyyibPay transactions response:', JSON.stringify(response.data));
 
   return Array.isArray(response.data) ? response.data : [];
 }

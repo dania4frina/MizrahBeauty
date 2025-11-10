@@ -72,7 +72,8 @@ public class BookingConfirmationActivity extends AppCompatActivity {
         // Refresh status when returning from payment
         if (currentSession != null && currentSession.getBillCode() != null) {
             android.util.Log.d("ToyyibPay", "Active session found, refreshing status for bill: " + currentSession.getBillCode());
-            refreshStatusFromServer();
+            // Retry status check with delays (ToyyibPay API can be slow to update)
+            refreshStatusWithRetry(0);
         }
     }
     
@@ -333,7 +334,24 @@ public class BookingConfirmationActivity extends AppCompatActivity {
         });
     }
     
-    private void refreshStatusFromServer() {
+    private void refreshStatusWithRetry(int attemptNumber) {
+        final int maxAttempts = 5;
+        final long[] delayMillis = {0, 2000, 3000, 5000, 8000}; // 0s, 2s, 3s, 5s, 8s
+        
+        if (attemptNumber >= maxAttempts) {
+            android.util.Log.d("ToyyibPay", "Max retry attempts reached");
+            Toast.makeText(this, "Payment status check timed out. Please refresh manually.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        
+        android.util.Log.d("ToyyibPay", "Status check attempt " + (attemptNumber + 1) + "/" + maxAttempts);
+        
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+            refreshStatusFromServer(attemptNumber);
+        }, delayMillis[attemptNumber]);
+    }
+    
+    private void refreshStatusFromServer(final int attemptNumber) {
         ToyyibPaySession session = ToyyibPaySessionManager.getCurrentSession();
         if (session == null || session.getBillCode() == null || session.getBillCode().isEmpty()) {
             android.util.Log.d("ToyyibPay", "refreshStatusFromServer: no active session or billCode");
@@ -351,6 +369,7 @@ public class BookingConfirmationActivity extends AppCompatActivity {
                         
                         if (!response.isSuccessful() || response.body() == null) {
                             android.util.Log.e("ToyyibPay", "Failed to fetch status. Code: " + response.code());
+                            refreshStatusWithRetry(attemptNumber + 1);
                             return;
                         }
                         PaymentStatusResponse body = response.body();
@@ -367,7 +386,11 @@ public class BookingConfirmationActivity extends AppCompatActivity {
                             
                             if (body.isPaid()) {
                                 android.util.Log.d("ToyyibPay", "Payment confirmed as PAID!");
-                                Toast.makeText(BookingConfirmationActivity.this, "Payment confirmed!", Toast.LENGTH_LONG).show();
+                                Toast.makeText(BookingConfirmationActivity.this, "Payment confirmed! ✓", Toast.LENGTH_LONG).show();
+                            } else if ("UNKNOWN".equals(body.getStatus()) || body.getStatus() == null || body.getStatus().isEmpty()) {
+                                // Status not ready yet, retry
+                                android.util.Log.d("ToyyibPay", "Status still pending, will retry...");
+                                refreshStatusWithRetry(attemptNumber + 1);
                             }
                         }
                     }
@@ -375,6 +398,7 @@ public class BookingConfirmationActivity extends AppCompatActivity {
                     @Override
                     public void onFailure(Call<PaymentStatusResponse> call, Throwable t) {
                         android.util.Log.e("ToyyibPay", "Status check failed: " + t.getMessage(), t);
+                        refreshStatusWithRetry(attemptNumber + 1);
                     }
                 });
     }
