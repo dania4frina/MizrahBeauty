@@ -2,6 +2,8 @@ package com.example.mizrahbeauty;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Patterns;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -17,6 +19,7 @@ import com.example.mizrahbeauty.payment.ToyyibPaySessionManager;
 import com.example.mizrahbeauty.payment.requests.CreateBillRequest;
 import com.example.mizrahbeauty.payment.responses.CreateBillResponse;
 import com.example.mizrahbeauty.payment.responses.PaymentStatusResponse;
+import com.google.android.material.textfield.TextInputEditText;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -32,6 +35,7 @@ public class BookingConfirmationActivity extends AppCompatActivity {
     private ImageView backButton;
     private TextView serviceNameText, staffNameText, appointmentDateText, serviceIdText, totalAmountText, paymentStatusText;
     private Button proceedToToyyibPayButton;
+    private TextInputEditText customerNameInput, customerEmailInput, customerPhoneInput;
     
     private String serviceName, staffName, appointmentDateTime, userEmail;
     private String customerName, customerPhone;
@@ -81,6 +85,7 @@ public class BookingConfirmationActivity extends AppCompatActivity {
         }
         
         displayBookingDetails();
+        populateCustomerInputs();
         updatePaymentStatusText();
     }
     
@@ -91,8 +96,14 @@ public class BookingConfirmationActivity extends AppCompatActivity {
         userEmail = intent.getStringExtra("USER_EMAIL");
         servicePrice = intent.getDoubleExtra("SERVICE_PRICE", 0.0);
         serviceId = intent.getIntExtra("SERVICE_ID", 0);
-        customerName = userEmail != null ? userEmail : "Customer";
-        customerPhone = "";
+        customerName = intent.getStringExtra("CUSTOMER_NAME");
+        if (TextUtils.isEmpty(customerName)) {
+            customerName = userEmail != null ? userEmail : "Customer";
+        }
+        customerPhone = intent.getStringExtra("CUSTOMER_PHONE");
+        if (customerPhone == null) {
+            customerPhone = "";
+        }
     }
     
     private void populateFieldsFromSession(ToyyibPaySession session) {
@@ -105,6 +116,18 @@ public class BookingConfirmationActivity extends AppCompatActivity {
         customerName = session.getCustomerName();
         customerPhone = session.getCustomerPhone();
     }
+
+    private void populateCustomerInputs() {
+        if (customerNameInput != null) {
+            customerNameInput.setText(customerName != null ? customerName : "");
+        }
+        if (customerEmailInput != null) {
+            customerEmailInput.setText(userEmail != null ? userEmail : "");
+        }
+        if (customerPhoneInput != null) {
+            customerPhoneInput.setText(customerPhone != null ? customerPhone : "");
+        }
+    }
     
     private void initializeViews() {
         backButton = findViewById(R.id.backButton);
@@ -115,6 +138,9 @@ public class BookingConfirmationActivity extends AppCompatActivity {
         totalAmountText = findViewById(R.id.totalAmountText);
         proceedToToyyibPayButton = findViewById(R.id.proceedToToyyibPayButton);
         paymentStatusText = findViewById(R.id.paymentStatusText);
+        customerNameInput = findViewById(R.id.customerNameInput);
+        customerEmailInput = findViewById(R.id.customerEmailInput);
+        customerPhoneInput = findViewById(R.id.customerPhoneInput);
     }
     
     private void setupClickListeners() {
@@ -185,16 +211,37 @@ public class BookingConfirmationActivity extends AppCompatActivity {
             return;
         }
         
-        if (userEmail == null || userEmail.isEmpty()) {
-            Toast.makeText(this, "User email is required for payment.", Toast.LENGTH_SHORT).show();
+        String inputName = customerNameInput != null ? customerNameInput.getText().toString().trim() : "";
+        String inputEmail = customerEmailInput != null ? customerEmailInput.getText().toString().trim() : "";
+        String inputPhone = customerPhoneInput != null ? customerPhoneInput.getText().toString().trim() : "";
+
+        if (TextUtils.isEmpty(inputName)) {
+            if (customerNameInput != null) {
+                customerNameInput.setError("Name is required");
+                customerNameInput.requestFocus();
+            }
+            Toast.makeText(this, "Customer name is required.", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        if (TextUtils.isEmpty(inputEmail) || !Patterns.EMAIL_ADDRESS.matcher(inputEmail).matches()) {
+            if (customerEmailInput != null) {
+                customerEmailInput.setError("Valid email is required");
+                customerEmailInput.requestFocus();
+            }
+            Toast.makeText(this, "Valid email is required for payment.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        customerName = inputName;
+        userEmail = inputEmail;
+        customerPhone = inputPhone;
         
         setProcessingState(true);
         
         String referenceId = generateReferenceId();
         String description = "Booking for " + (serviceName != null ? serviceName : "Service");
-        String payerName = (customerName != null && !customerName.isEmpty()) ? customerName : userEmail;
+        String payerName = customerName;
         
         CreateBillRequest request = new CreateBillRequest(
                 servicePrice,
@@ -219,14 +266,19 @@ public class BookingConfirmationActivity extends AppCompatActivity {
                 customerPhone
         );
         
+        android.util.Log.d("ToyyibPay", "Initiating createBill request...");
+        android.util.Log.d("ToyyibPay", "Request details - Amount: " + servicePrice + ", Email: " + userEmail + ", Name: " + payerName);
+        
         ToyyibPayApi api = ToyyibPayClient.getApi();
         api.createBill(request).enqueue(new Callback<CreateBillResponse>() {
             @Override
             public void onResponse(Call<CreateBillResponse> call, Response<CreateBillResponse> response) {
+                android.util.Log.d("ToyyibPay", "Response received - Code: " + response.code() + ", Success: " + response.isSuccessful());
                 setProcessingState(false);
                 
                 if (!response.isSuccessful() || response.body() == null) {
-                    Toast.makeText(BookingConfirmationActivity.this, "Failed to create ToyyibPay bill.", Toast.LENGTH_SHORT).show();
+                    android.util.Log.e("ToyyibPay", "Failed response or null body. Code: " + response.code());
+                    Toast.makeText(BookingConfirmationActivity.this, "Failed to create ToyyibPay bill (HTTP " + response.code() + ")", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 
@@ -234,6 +286,8 @@ public class BookingConfirmationActivity extends AppCompatActivity {
                 String billCode = body.getBillCode();
                 String paymentUrl = body.getPaymentUrl();
                 String status = body.getStatus() != null ? body.getStatus() : "CREATED";
+                
+                android.util.Log.d("ToyyibPay", "Bill created successfully - BillCode: " + billCode + ", PaymentUrl: " + paymentUrl);
                 
                 session.assignBillDetails(billCode, paymentUrl, status);
                 ToyyibPaySessionManager.startSession(session);
@@ -243,12 +297,14 @@ public class BookingConfirmationActivity extends AppCompatActivity {
                 if (paymentUrl != null && !paymentUrl.isEmpty()) {
                     openPaymentUrl(paymentUrl);
                 } else {
+                    android.util.Log.e("ToyyibPay", "Payment URL is null or empty");
                     Toast.makeText(BookingConfirmationActivity.this, "Invalid payment URL.", Toast.LENGTH_SHORT).show();
                 }
             }
             
             @Override
             public void onFailure(Call<CreateBillResponse> call, Throwable t) {
+                android.util.Log.e("ToyyibPay", "Network failure: " + t.getMessage(), t);
                 setProcessingState(false);
                 Toast.makeText(BookingConfirmationActivity.this, "ToyyibPay error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }

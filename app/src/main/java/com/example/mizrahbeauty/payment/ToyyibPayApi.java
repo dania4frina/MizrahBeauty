@@ -17,10 +17,10 @@ import retrofit2.http.Query;
  */
 public interface ToyyibPayApi {
 
-    @POST("payment/bill")
+    @POST("toyyibpay/payment/bill")
     Call<CreateBillResponse> createBill(@Body CreateBillRequest request);
 
-    @GET("payment/status")
+    @GET("toyyibpay/payment/status")
     Call<PaymentStatusResponse> getPaymentStatus(@Query("billCode") String billCode);
 }
 

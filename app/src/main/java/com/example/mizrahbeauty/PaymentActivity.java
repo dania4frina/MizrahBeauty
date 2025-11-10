@@ -32,6 +32,9 @@ public class PaymentActivity extends AppCompatActivity {
     public static final String EXTRA_CUSTOMER_NAME = "EXTRA_CUSTOMER_NAME";
     public static final String EXTRA_CUSTOMER_EMAIL = "EXTRA_CUSTOMER_EMAIL";
 
+    private static final String TOYYIB_RETURN_URL = "mizrahbeauty://payment/result";
+    private static final String TOYYIB_CALLBACK_URL = "https://mizrahbeauty-toyyibpay.onrender.com/toyyibpay/callback";
+
     private EditText amountInput;
     private EditText descriptionInput;
     private EditText nameInput;
@@ -113,7 +116,10 @@ public class PaymentActivity extends AppCompatActivity {
                 description,
                 customerName,
                 customerEmail,
-                UUID.randomUUID().toString()
+                "",
+                UUID.randomUUID().toString(),
+                TOYYIB_RETURN_URL,
+                TOYYIB_CALLBACK_URL
         );
 
         repository.createBill(request, new ToyyibPayRepository.CreateBillCallback() {
