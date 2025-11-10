@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MizrahBeauty"
+        tools:targetApi="31">
+        <activity
+            android:name=".SplashScreenActivity"
+            android:exported="true"
+            android:theme="@style/SplashTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".LoginActivity"
+            android:exported="false" />
+        <activity
+            android:name=".RegisterActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AdminDashboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".StaffDashboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".UserDashboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BasicSpaServicesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".FaceRelaxingServicesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".HairSalonServicesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BridalPackageServicesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ServiceHistoryActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ProfileActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ServiceUpdateActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BookingManagementActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CustomerReviewActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ServicesListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CreateBookingActivity"
+            android:exported="false" />
+        <activity
+            android:name=".UserBookingsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AddReviewActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ModernBookingListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".StaffManagementActivity"
+            android:exported="false" />
+        <activity
+            android:name=".StaffStatusPreviewActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ServiceManagementActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AddServiceActivity"
+            android:exported="false" />
+        <activity
+            android:name=".EditServiceActivity"
+            android:exported="false" />
+        <activity
+            android:name=".StaffRegistrationActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ServicesByCategoryActivity"
+            android:exported="false" />
+        <activity
+            android:name=".FeedbackActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AdminServiceDashboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AdminServicesByCategoryActivity"
+            android:exported="false" />
+        <activity
+            android:name=".StaffFeedbackActivity"
+            android:exported="false" />
+        <activity
+            android:name=".PublicFeedbackActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ForgotPasswordActivity"
+            android:exported="false" />
+        <activity
+            android:name=".PaymentActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".StaffBookingActivity"
+            android:exported="false" />
+        <activity
+            android:name=".PaymentMethodActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BookingConfirmationActivity"
+            android:exported="false" />
+    </application>
+
+</manifest>

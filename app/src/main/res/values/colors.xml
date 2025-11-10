@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Colors (Pink Theme) -->
+    <color name="primary_purple">#E91E63</color>
+    <color name="primary_pink">#F48FB1</color>
+    <color name="background_pink">#F8F8F8</color>
+
+    <!-- Secondary Colors -->
+    <color name="light_pink">#FCE4EC</color>
+    <color name="soft_pink">#F8BBD9</color>
+    <color name="dark_purple">#C2185B</color>
+    
+    <!-- Header Gradient Colors -->
+    <color name="header_dark_purple">#C2185B</color>
+    <color name="header_light_purple">#E91E63</color>
+    
+    <!-- Text Colors (from Bookings image) -->
+    <color name="text_primary">#333333</color>
+    <color name="text_secondary">#666666</color>
+    <color name="text_light">#666666</color>
+    <color name="text_white">#FFFFFF</color>
+    <color name="text_purple">#E91E63</color>
+    <color name="text_dark">#333333</color>
+    <color name="text_disabled">#CCCCCC</color>
+    
+    <!-- Background Colors -->
+    <color name="background_white">#FFFFFF</color>
+    <color name="background_gray">#F5F5F5</color>
+    <color name="background_dark">#333333</color>
+    
+    <!-- Status Colors (matching HAIR SALON image) -->
+    <color name="success_green">#4CAF50</color>
+    <color name="warning_orange">#FF9800</color>
+    <color name="error_red">#AD1457</color>
+    <color name="info_blue">#E91E63</color>
+    <color name="status_completed">#E91E63</color>
+    <color name="status_cancelled">#AD1457</color>
+    <color name="status_active">#4CAF50</color>
+    <color name="status_total">#E91E63</color>
+    
+    <!-- Card Colors -->
+    <color name="card_background">#FFFFFF</color>
+    <color name="card_shadow">#E0E0E0</color>
+    
+    <!-- Button Colors -->
+    <color name="button_primary">#E91E63</color>
+    <color name="button_secondary">#F48FB1</color>
+    <color name="button_text">#FFFFFF</color>
+    
+    <!-- Border Colors -->
+    <color name="border_light">#E0E0E0</color>
+    <color name="border_medium">#CCCCCC</color>
+    <color name="border_dark">#999999</color>
+    
+    <!-- Additional Colors for compatibility -->
+    <color name="primary_pink_dark">#C2185B</color>
+    <color name="primary_pink_light">#FCE4EC</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="accent_pink">#F48FB1</color>
+    <color name="background_light_pink">#FFF0F5</color>
+    
+    <!-- Splash Screen Colors -->
+    <color name="splash_background">#F8F8F8</color>
+    <color name="splash_text_primary">#E91E63</color>
+    <color name="splash_text_secondary">#C2185B</color>
+</resources>

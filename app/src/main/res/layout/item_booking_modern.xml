@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="16dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
+    android:orientation="horizontal"
+    android:background="@drawable/booking_item_background"
+    android:elevation="8dp"
+    android:padding="16dp"
+    android:gravity="center_vertical"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground">
+
+    <!-- Left Side: Service Icon -->
+    <LinearLayout
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/service_icon_background">
+
+        <TextView
+            android:id="@+id/serviceIconText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="BP"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF" />
+
+    </LinearLayout>
+
+    <!-- Middle: Service Info -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginStart="12dp">
+
+        <TextView
+            android:id="@+id/serviceNameText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Bridal Package"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_dark"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/dateTimeText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="08 Oct 2025, 13:10"
+            android:textSize="13sp"
+            android:textColor="@color/text_light"
+            android:layout_marginTop="4dp"
+            android:drawableStart="@drawable/ic_schedule"
+            android:drawablePadding="6dp"
+            android:gravity="center_vertical" />
+
+        <TextView
+            android:id="@+id/customerText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="customer@email.com"
+            android:textSize="12sp"
+            android:textColor="@color/text_light"
+            android:layout_marginTop="2dp"
+            android:drawableStart="@drawable/ic_person"
+            android:drawablePadding="6dp"
+            android:gravity="center_vertical"
+            android:visibility="gone" />
+
+        <!-- Notes (if available) -->
+        <TextView
+            android:id="@+id/notesText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Notes: Special requirements"
+            android:textSize="11sp"
+            android:textColor="@color/text_light"
+            android:textStyle="italic"
+            android:layout_marginTop="4dp"
+            android:drawableStart="@drawable/ic_notes"
+            android:drawablePadding="6dp"
+            android:gravity="center_vertical"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <!-- Right Side: Status -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginStart="8dp">
+
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ACTIVE"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/status_background"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp" />
+
+        <ImageView
+            android:id="@+id/actionButton"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_more_vert"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            android:layout_marginTop="4dp"
+            android:tint="@color/text_light"
+            android:clickable="true"
+            android:focusable="true" />
+
+    </LinearLayout>
+
+</LinearLayout>
