@@ -64,11 +64,34 @@ router.get('/payment/status', async (req, res) => {
     const transactions = await getBillTransactions(billCode);
     const latest = transactions.length > 0 ? transactions[transactions.length - 1] : null;
 
+    // Map ToyyibPay fields correctly:
+    // billpaymentStatus: "1" = paid, "0" or missing = unpaid
+    // billStatus: "0" = pending, "1" = completed
+    const paymentStatus = latest?.billpaymentStatus;
+    const isPaid = paymentStatus === '1';
+    
+    let status = 'UNKNOWN';
+    let remark = '';
+    
+    if (isPaid) {
+      status = 'SUCCESS';
+      remark = `Payment successful via ${latest.billpaymentChannel || 'Online Banking'}`;
+    } else if (paymentStatus === '2') {
+      status = 'PENDING';
+      remark = 'Payment pending verification';
+    } else if (paymentStatus === '3') {
+      status = 'FAILED';
+      remark = 'Payment failed or cancelled';
+    } else if (latest?.billStatus === '0' && !paymentStatus) {
+      status = 'PENDING';
+      remark = 'Waiting for payment';
+    }
+
     res.json({
       billCode,
-      status: latest?.status ?? 'UNKNOWN',
-      paid: latest?.status === '1',
-      remark: latest?.msg ?? '',
+      status,
+      paid: isPaid,
+      remark,
       transactions
     });
   } catch (error) {

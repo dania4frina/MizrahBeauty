@@ -10,7 +10,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.browser.customtabs.CustomTabsIntent;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 
 import com.example.mizrahbeauty.payment.ToyyibPayApi;
 import com.example.mizrahbeauty.payment.ToyyibPayClient;
@@ -47,34 +48,61 @@ public class BookingConfirmationActivity extends AppCompatActivity {
     private static final String TOYYIB_RETURN_URL = "mizrahbeauty://payment/result";
     private static final String TOYYIB_CALLBACK_URL = "https://mizrahbeauty-toyyibpay.onrender.com/toyyibpay/callback";
     
+    private ActivityResultLauncher<Intent> paymentLauncher;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_booking_confirmation);
         
+        setupPaymentLauncher();
         initializeViews();
         setupClickListeners();
         handleIncomingIntent(getIntent());
     }
     
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        android.util.Log.d("ToyyibPay", "onNewIntent called");
-        setIntent(intent);
-        handleIncomingIntent(intent);
+    private void setupPaymentLauncher() {
+        paymentLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                android.util.Log.d("ToyyibPay", "Payment WebView returned with result code: " + result.getResultCode());
+                
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    Intent data = result.getData();
+                    String status = data.getStringExtra(PaymentWebViewActivity.RESULT_EXTRA_STATUS);
+                    String billCode = data.getStringExtra(PaymentWebViewActivity.RESULT_EXTRA_BILL_CODE);
+                    
+                    android.util.Log.d("ToyyibPay", "Payment result - Status: " + status + ", BillCode: " + billCode);
+                    
+                    // Update session with status from WebView
+                    if (currentSession != null) {
+                        currentSession.updateStatus(status, "Payment completed via WebView", "SUCCESS".equals(status));
+                        updatePaymentStatusText();
+                    }
+                    
+                    // Refresh status from server to get complete details
+                    if (billCode != null && currentSession != null) {
+                        refreshStatusWithRetry(0);
+                    }
+                    
+                    if ("SUCCESS".equals(status)) {
+                        Toast.makeText(this, "Payment successful! ✓", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(this, "Payment status: " + status, Toast.LENGTH_SHORT).show();
+                    }
+                } else if (result.getResultCode() == RESULT_CANCELED) {
+                    android.util.Log.d("ToyyibPay", "Payment cancelled by user");
+                    Toast.makeText(this, "Payment cancelled", Toast.LENGTH_SHORT).show();
+                }
+            }
+        );
     }
     
     @Override
     protected void onResume() {
         super.onResume();
-        android.util.Log.d("ToyyibPay", "onResume called - checking for payment updates");
-        // Refresh status when returning from payment
-        if (currentSession != null && currentSession.getBillCode() != null) {
-            android.util.Log.d("ToyyibPay", "Active session found, refreshing status for bill: " + currentSession.getBillCode());
-            // Retry status check with delays (ToyyibPay API can be slow to update)
-            refreshStatusWithRetry(0);
-        }
+        android.util.Log.d("ToyyibPay", "onResume called");
+        // Status updates are now handled by WebView activity result
     }
     
     private void handleIncomingIntent(Intent intent) {
@@ -83,29 +111,12 @@ public class BookingConfirmationActivity extends AppCompatActivity {
             return;
         }
         
-        android.util.Log.d("ToyyibPay", "handleIncomingIntent - Action: " + intent.getAction() + ", Data: " + intent.getData());
+        android.util.Log.d("ToyyibPay", "handleIncomingIntent - loading booking details");
         
-        boolean fromDeepLink = Intent.ACTION_VIEW.equals(intent.getAction()) && intent.getData() != null;
-        
-        if (fromDeepLink) {
-            android.util.Log.d("ToyyibPay", "Deep link detected! URI: " + intent.getData().toString());
-            android.util.Log.d("ToyyibPay", "Query params: " + intent.getData().getQuery());
-            
-            ToyyibPaySessionManager.updateFromDeepLink(intent.getData());
-            currentSession = ToyyibPaySessionManager.getCurrentSession();
-            if (currentSession != null) {
-                android.util.Log.d("ToyyibPay", "Session updated from deep link. Status: " + currentSession.getLastStatus());
-                populateFieldsFromSession(currentSession);
-            }
-            refreshStatusFromServer();
-            
-            Toast.makeText(this, "Payment response received", Toast.LENGTH_SHORT).show();
-        } else {
-            android.util.Log.d("ToyyibPay", "Regular intent (not deep link), clearing session");
-            ToyyibPaySessionManager.clearSession();
-            populateFieldsFromExtras(intent);
-            currentSession = null;
-        }
+        // Clear any previous session when starting fresh
+        ToyyibPaySessionManager.clearSession();
+        populateFieldsFromExtras(intent);
+        currentSession = null;
         
         displayBookingDetails();
         populateCustomerInputs();
@@ -129,17 +140,6 @@ public class BookingConfirmationActivity extends AppCompatActivity {
         }
     }
     
-    private void populateFieldsFromSession(ToyyibPaySession session) {
-        serviceName = session.getServiceName();
-        staffName = session.getStaffName();
-        appointmentDateTime = session.getAppointmentDateTime();
-        userEmail = session.getCustomerEmail();
-        servicePrice = session.getAmount();
-        serviceId = session.getServiceId();
-        customerName = session.getCustomerName();
-        customerPhone = session.getCustomerPhone();
-    }
-
     private void populateCustomerInputs() {
         if (customerNameInput != null) {
             customerNameInput.setText(customerName != null ? customerName : "");
@@ -408,22 +408,15 @@ public class BookingConfirmationActivity extends AppCompatActivity {
     }
     
     private void openPaymentUrl(String url) {
-        android.util.Log.d("ToyyibPay", "Opening payment URL: " + url);
+        android.util.Log.d("ToyyibPay", "Opening payment URL in WebView: " + url);
         
-        try {
-            CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder().build();
-            customTabsIntent.launchUrl(this, android.net.Uri.parse(url));
-            android.util.Log.d("ToyyibPay", "Custom Tab launched successfully");
-        } catch (Exception e) {
-            android.util.Log.e("ToyyibPay", "Custom Tab failed, using fallback intent: " + e.getMessage());
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url));
-            if (browserIntent.resolveActivity(getPackageManager()) != null) {
-                startActivity(browserIntent);
-            } else {
-                android.util.Log.e("ToyyibPay", "No browser available");
-                Toast.makeText(this, "No browser available to open ToyyibPay.", Toast.LENGTH_SHORT).show();
-            }
-        }
+        Intent intent = new Intent(this, PaymentWebViewActivity.class);
+        intent.putExtra(PaymentWebViewActivity.EXTRA_PAYMENT_URL, url);
+        intent.putExtra(PaymentWebViewActivity.EXTRA_RETURN_URL, TOYYIB_RETURN_URL);
+        intent.putExtra(PaymentWebViewActivity.EXTRA_BILL_CODE, currentSession != null ? currentSession.getBillCode() : "");
+        
+        paymentLauncher.launch(intent);
+        android.util.Log.d("ToyyibPay", "WebView activity launched successfully");
     }
     
     private void setProcessingState(boolean processing) {

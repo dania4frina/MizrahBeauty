@@ -147,6 +147,11 @@
                     android:path="/result" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".PaymentWebViewActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MizrahBeauty"
+            android:configChanges="orientation|screenSize|keyboardHidden" />
     </application>
 
 </manifest>
